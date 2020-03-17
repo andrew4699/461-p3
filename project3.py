@@ -153,9 +153,13 @@ class HttpRound(threading.Thread):
 
                     address = val[0]
                     for ip in banned_list:
-                        if address == ip:
+                        if ip in address:
                             break
-                        if socket.gethostbyname(address) == ip:
+                        if address in ip:
+                            break
+                        if ip in socket.gethostbyname(address):
+                            break
+                        if socket.gethostbyname(address) in ip:
                             break
                     # determine the port
                     if len(val) == 1:
