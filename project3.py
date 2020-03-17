@@ -127,7 +127,7 @@ class HttpRound(threading.Thread):
                 # Remember three things - the initial line, whether
                 # the protocol is HTTPS or HTTP, and whether the request
                 # is a CONNECT request. Always move on to the header phase.
-                print('>>>' + next_bytes[:-2].decode('utf-8'))
+                # print('>>>' + next_bytes[:-2].decode('utf-8'))
 
                 backlog = next_bytes
                 is_https = next_bytes.split()[1][0:5] == b'https'
@@ -140,6 +140,7 @@ class HttpRound(threading.Thread):
 
                 # First send the current header to the receiver if it is determined;
                 # else save the current header as backlog
+                # try:
                 if backlog is None:
                     receiver_buf.sendBytes(next_bytes)
                 else:
@@ -153,32 +154,41 @@ class HttpRound(threading.Thread):
 
                     address = val[0]
                     address_ = address.decode('utf-8')
-                    for ip in banned_list:
-                        if ip in address_:
-                            break
-                        if address_ in ip:
-                            break
-                    # determine the port
-                    if len(val) == 1:
-                        port = 443 if is_https else 80
-                    else:
-                        port = int(val[1])
-
-                    # Determine if the connection was successful
-                    connect_success = False
                     try:
-                        receiver_buf.sock.connect((address, port))
-                        connect_success = True
-                    except:
+                    # print(address_)
+                        for ip in banned_list:
+                            # print(ip)
+                            if ip in address_:
+                                print(address_, " is BLOCKED")
+                                send_http_response(sender_buf, b'200', b'Ignore')
+                                break
+                            if address_ in ip:
+                                print(address_, " is BLOCKED")
+                                send_http_response(sender_buf, b'200', b'Ignore')
+                                break
+                        # determine the port
+                        if len(val) == 1:
+                            port = 443 if is_https else 80
+                        else:
+                            port = int(val[1])
+
+                        # Determine if the connection was successful
+                        connect_success = False
+                        try:
+                            receiver_buf.sock.connect((address, port))
+                            connect_success = True
+                        except:
+                            if not is_connect:
+                                return
+
                         if not is_connect:
-                            return
+                            receiver_buf.sendBytes(backlog)
+                            backlog = None
 
-                    if not is_connect:
-                        receiver_buf.sendBytes(backlog)
-                        backlog = None
-
-                        response_round = HttpRound(receiver_buf, sender_buf, False)
-                        response_round.start()
+                            response_round = HttpRound(receiver_buf, sender_buf, False)
+                            response_round.start()
+                    except:
+                        pass
 
                 if len(next_bytes) <= 2:
                     # received an empty line; signifies end of headers
@@ -189,8 +199,10 @@ class HttpRound(threading.Thread):
                 # We are in the body phase, where we simply pass on the next line
                 if len(next_bytes) == 0:
                     break
-
-                receiver_buf.sendBytes(next_bytes)
+                try:
+                    receiver_buf.sendBytes(next_bytes)
+                except:
+                    pass
 
         if is_connect:
             if connect_success:
