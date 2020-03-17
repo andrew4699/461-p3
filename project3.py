@@ -152,14 +152,11 @@ class HttpRound(threading.Thread):
                     val = next_bytes.split()[1].split(b':')
 
                     address = val[0]
+                    address_ = address.decode('utf-8')
                     for ip in banned_list:
-                        if ip in address:
+                        if ip in address_:
                             break
-                        if address in ip:
-                            break
-                        if ip in socket.gethostbyname(address):
-                            break
-                        if socket.gethostbyname(address) in ip:
+                        if address_ in ip:
                             break
                     # determine the port
                     if len(val) == 1:
