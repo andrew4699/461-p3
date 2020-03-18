@@ -230,7 +230,7 @@ class Tunnel(threading.Thread):
         while True:
             message_from_src = self.src.getNext1024()
             if message_from_src is None:
-                print("closing tunnel. error")
+                # print("closing tunnel. error")
                 self.stop()
                 return
 
@@ -249,9 +249,11 @@ class Tunnel(threading.Thread):
 def main():
     port = int(sys.argv[1])
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((socket.gethostname(), port))
+    
+
+    s.bind(("0.0.0.0", port))
 
     s.listen(5)
 
